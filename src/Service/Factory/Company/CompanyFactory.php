@@ -7,7 +7,14 @@ use Faker\Factory;
 
 class CompanyFactory
 {
-    public function createCompany(): Company
+    public function createCompany(string $name): Company
+    {
+        $company = new Company();
+        $company->setName($name);
+
+        return $company;
+    }
+    public function createRandomCompany(): Company
     {
         $faker = Factory::create();
 

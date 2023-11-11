@@ -10,7 +10,26 @@ use Faker\Factory;
 
 class EmployeeFactory
 {
-    public function createEmployee(Company $company, User $user, Project $project): Employee
+    public function createEmployee(
+        Company $company,
+        User $user,
+        Project $project,
+        string $firstName,
+        string $lastName,
+        int $salary
+    ): Employee
+    {
+        $employee = new Employee();
+        $employee->setCompany($company);
+        $employee->setProject($project);
+        $employee->setConnectedUser($user);
+        $employee->setFirstName($firstName);
+        $employee->setLastName($lastName);
+        $employee->setSalary($salary);
+
+        return $employee;
+    }
+    public function createRandomEmployee(Company $company, User $user, Project $project): Employee
     {
         $faker = Factory::create();
 

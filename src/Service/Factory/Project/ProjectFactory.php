@@ -9,7 +9,16 @@ use Faker\Factory;
 
 class ProjectFactory
 {
-    public function createProject(Company $company): Project
+    public function createProject(Company $company, string $name): Project
+    {
+        $project = new Project();
+        $project->setName($name);
+        $project->setCompany($company);
+
+        return $project;
+    }
+
+    public function createRandomProject(Company $company): Project
     {
         $faker = Factory::create();
 
@@ -19,5 +28,4 @@ class ProjectFactory
 
         return $project;
     }
-
 }
