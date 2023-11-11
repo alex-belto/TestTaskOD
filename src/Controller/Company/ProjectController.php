@@ -4,6 +4,7 @@ namespace App\Controller\Company;
 
 use App\Entity\Company;
 use Doctrine\ORM\EntityManagerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,10 +22,18 @@ class ProjectController extends AbstractController
     public function showProjectsAtCompany(Company $company): JsonResponse
     {
         $projects = $company->getProjects();
-        return $this->json($projects);
+        $projectsArray = [];
+
+        foreach ($projects as $project) {
+            $projectsArray[] = [
+                'project_name' => $project->getName()
+            ];
+        }
+        return $this->json($projectsArray);
     }
 
     #[Route('/companies/project_add/{id}', name: 'company_project_add', methods: ['PUT'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function addProjectToCompany(Request $request, Company $company): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -36,6 +45,7 @@ class ProjectController extends AbstractController
     }
 
     #[Route('/companies/project_delete/{id}', name: 'company_project_delete', methods: ['DELETE'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function deleteProjectInCompany(Request $request, Company $company): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

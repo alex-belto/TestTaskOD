@@ -23,13 +23,24 @@ class UserFactory
         return $user;
     }
 
-    public function createUser(): User
+    public function createRandomUser(): User
     {
         $faker = Factory::create();
         $user = new User();
         $user->setUsername($faker->userName());
         $user->setRoles(['ROLE_USER']);
         $password = $this->hasher->hashPassword($user, 'user');
+        $user->setPassword($password);
+
+        return $user;
+    }
+
+    public function createUser(string $username, string $password): User
+    {
+        $user = new User();
+        $user->setUsername($username);
+        $user->setRoles(['ROLE_USER']);
+        $password = $this->hasher->hashPassword($user, $password);
         $user->setPassword($password);
 
         return $user;

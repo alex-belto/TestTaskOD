@@ -6,6 +6,7 @@ use App\Entity\Employee;
 use App\Repository\EmployeeRepository;
 use App\Service\Factory\Employee\EmployeeFactory;
 use Doctrine\ORM\EntityManagerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,16 +30,36 @@ class EmployeeController extends AbstractController
     public function show(): JsonResponse
     {
         $employees = $this->employeeRepository->findAll();
-        return $this->json($employees);
+        $employeesArray = [];
+
+        foreach ($employees as $employee) {
+            $employeesArray = [
+                'firstName' => $employee->getFirstName(),
+                'lastName' => $employee->getLastName(),
+                'salary' => $employee->getSalary(),
+                'company' => $employee->getCompany()->getName(),
+                'project' => $employee->getProject()->getName(),
+            ];
+        }
+
+        return $this->json($employeesArray);
     }
 
     #[Route('/employees/{id}', name: 'employee_get_one', methods: ['GET'])]
     public function getEmployee(Employee $employee): JsonResponse
     {
+        $employee = [
+            'firstName' => $employee->getFirstName(),
+            'lastName' => $employee->getLastName(),
+            'salary' => $employee->getSalary(),
+            'company' => $employee->getCompany()->getName(),
+            'project' => $employee->getProject()->getName(),
+        ];
         return $this->json($employee);
     }
 
     #[Route('/employees', name: 'employee_create', methods: ['POST'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function createEmployee(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -56,6 +77,7 @@ class EmployeeController extends AbstractController
     }
 
     #[Route('/employees/{id}', name: 'employee_update', methods: ['PUT'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function updateEmployee(Request $request, Employee $employee): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -73,6 +95,7 @@ class EmployeeController extends AbstractController
 
 
     #[Route('/employees/{id}', name: 'employee_delete', methods: ['DELETE'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function deleteEmployee(Employee $employee): JsonResponse
     {
         $this->em->remove($employee);

@@ -46,7 +46,7 @@ class CompanyStructureFixtures extends Fixture
         $manager->persist($admin);
 
         for($i = 0; $i <= 5; $i++) {
-            $user = $this->userFactory->createUser();
+            $user = $this->userFactory->createRandomUser();
             $manager->persist($user);
         }
         $manager->flush();
@@ -57,7 +57,7 @@ class CompanyStructureFixtures extends Fixture
         }
         $manager->flush();
 
-        for($i = 1; $i < 5; $i++) {
+        for($i = 0; $i <= 5; $i++) {
             $companyId = rand(1, count($this->companyRepository->findAll()));
             $company = $this->companyRepository->find($companyId);
             $project = $this->projectFactory->createRandomProject($company);

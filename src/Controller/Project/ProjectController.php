@@ -6,6 +6,7 @@ use App\Entity\Project;
 use App\Repository\ProjectRepository;
 use App\Service\Factory\Project\ProjectFactory;
 use Doctrine\ORM\EntityManagerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,16 +30,29 @@ class ProjectController extends AbstractController
     public function show(): JsonResponse
     {
         $projects = $this->projectRepository->findAll();
-        return $this->json($projects);
+        $projectsArray = [];
+
+        foreach ($projects as $project) {
+            $projectsArray[] = [
+                'project_name' => $project->getName(),
+                'company_name' => $project->getCompany()->getName()
+            ];
+        }
+        return $this->json($projectsArray);
     }
 
     #[Route('/projects/{id}', name: 'project_get_one', methods: ['GET'])]
     public function getProject(Project $project): JsonResponse
     {
-        return $this->json($project);
+        $projectsArray = [
+            'project_name' => $project->getName(),
+            'company_name' => $project->getCompany()->getName()
+        ];
+        return $this->json($projectsArray);
     }
 
     #[Route('/projects', name: 'project_create', methods: ['POST'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function createProject(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -49,6 +63,7 @@ class ProjectController extends AbstractController
     }
 
     #[Route('/projects/{id}', name: 'project_update', methods: ['PUT'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function updateProject(Request $request, Project $project): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

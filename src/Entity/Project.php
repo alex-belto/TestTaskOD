@@ -43,6 +43,7 @@ class Project
     public function setCompany(?Company $company): static
     {
         $this->company = $company;
+        $company->addProject($this);
 
         return $this;
     }

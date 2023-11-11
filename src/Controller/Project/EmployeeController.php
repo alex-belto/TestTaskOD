@@ -4,6 +4,7 @@ namespace App\Controller\Project;
 
 use App\Entity\Project;
 use Doctrine\ORM\EntityManagerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,11 +21,23 @@ class EmployeeController extends AbstractController
     public function showEmployeeAtProject(Project $project): JsonResponse
     {
         $employees = $project->getEmployees();
+        $employeesArray = [];
 
-        return $this->json($employees);
+        foreach ($employees as $employee) {
+            $employeesArray[] = [
+                'firstName' => $employee->getFirstName(),
+                'lastName' => $employee->getLastName(),
+                'salary' => $employee->getSalary(),
+                'company' => $employee->getCompany()->getName(),
+                'project' => $employee->getProject()->getName(),
+            ];
+        }
+
+        return $this->json($employeesArray);
     }
 
     #[Route('/projects/employees_add/{id}', name: 'project_employee_add', methods: ['PUT'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function addEmployeeToProject(Request $request, Project $project): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -36,6 +49,7 @@ class EmployeeController extends AbstractController
     }
 
     #[Route('/project/employees_delete/{id}', name: 'project_employee_delete', methods: ['DELETE'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function deleteEmployeeInProject(Request $request, Project $project): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
