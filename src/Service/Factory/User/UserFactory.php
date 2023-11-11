@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\User;
+namespace App\Service\Factory\User;
 
 use App\Entity\User;
 use Faker\Factory;
