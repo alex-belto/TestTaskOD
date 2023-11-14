@@ -3,11 +3,12 @@
 namespace App\Controller\Company;
 
 use App\Entity\Company;
+use App\Entity\Project;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 class ProjectController extends AbstractController
@@ -18,8 +19,8 @@ class ProjectController extends AbstractController
         $this->em = $em;
     }
 
-    #[Route('/companies/project_show/{id}', name: 'company_project_show', methods: ['GET'])]
-    public function showProjectsAtCompany(Company $company): JsonResponse
+    #[Route('/companies/{id}/projects', name: 'company_project_index', methods: ['GET'])]
+    public function index(Company $company): JsonResponse
     {
         $projects = $company->getProjects();
         $projectsArray = [];
@@ -32,27 +33,25 @@ class ProjectController extends AbstractController
         return $this->json($projectsArray);
     }
 
-    #[Route('/companies/project_add/{id}', name: 'company_project_add', methods: ['PUT'])]
+    #[Route('/companies/{id}/projects/{project_id}', name: 'company_project_add', methods: ['PUT'])]
+    #[ParamConverter('project', options: ['id' => 'project_id'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function addProjectToCompany(Request $request, Company $company): JsonResponse
+    public function add(Company $company, Project $project): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $project = $data['project'];
         $company->addProject($project);
         $this->em->flush();
 
-        return $this->json('Project successfully added to company' . $company->getName() . ' !');
+        return $this->json(sprintf('Project %s successfully added to company %s!', $project->getName(), $company->getName()));
     }
 
-    #[Route('/companies/project_delete/{id}', name: 'company_project_delete', methods: ['DELETE'])]
+    #[Route('/companies/{id}/projects/{project_id}', name: 'company_project_remove', methods: ['DELETE'])]
+    #[ParamConverter('project', options: ['id' => 'project_id'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function deleteProjectInCompany(Request $request, Company $company): JsonResponse
+    public function remove(Company $company, Project $project): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $project = $data['project'];
         $company->removeProject($project);
         $this->em->flush();
 
-        return $this->json('Project successfully deleted from company' . $company->getName() . ' !', 204);
+        return $this->json(sprintf('Project %s successfully removed from company %s!',$project->getName(), $company->getName()));
     }
 }

@@ -26,8 +26,8 @@ class CompanyController extends AbstractController
         $this->companyFactory = $companyFactory;
         $this->em = $em;
     }
-    #[Route('/companies', name: 'company_show', methods: ['GET'])]
-    public function show(): JsonResponse
+    #[Route('/companies', name: 'company_index', methods: ['GET'])]
+    public function index(): JsonResponse
     {
         $companies = $this->companyRepository->findAll();
         $companiesArray = [];
@@ -48,7 +48,7 @@ class CompanyController extends AbstractController
                     'project_employee_salary' => $employee->getSalary(),
                 ];
             }
-            $companiesArray = [
+            $companiesArray[] = [
                 'name' => $company->getName(),
                 'projects' => $projects,
                 'employee' => $employees
@@ -57,8 +57,8 @@ class CompanyController extends AbstractController
         return $this->json($companiesArray);
     }
 
-    #[Route('/companies/{id}', name: 'company_get_one', methods: ['GET'])]
-    public function getCompany(Company $company): JsonResponse
+    #[Route('/companies/{id}', name: 'company_show', methods: ['GET'])]
+    public function show(Company $company): JsonResponse
     {
         $projects = [];
         $employees = [];
@@ -80,39 +80,40 @@ class CompanyController extends AbstractController
             'employee' => $employees
         ];
 
-        return $this->json($companyArray, 200, [], ['groups' => 'show_product']);
+        return $this->json($companyArray);
     }
 
     #[Route('/companies', name: 'company_create', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function createCompany(Request $request): JsonResponse
+    public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         $company = $this->companyFactory->createCompany($data['name']);
         $this->em->persist($company);
         $this->em->flush();
-        return $this->json($company, 201);
+        return $this->json(sprintf('Company %s successfully created!', $company->getName()), 201);
     }
 
     #[Route('/companies/{id}', name: 'company_update', methods: ['PUT'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function updateCompany(Request $request, Company $company): JsonResponse
+    public function update(Request $request, Company $company): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
         $company->setName($data['name']);
         $this->em->flush();
 
-        return $this->json($company);
+        return $this->json(sprintf('Company %s successfully updated!', $company->getName()));
     }
 
     #[Route('/companies/{id}', name: 'company_delete', methods: ['DELETE'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function deleteCompany(Company $company): JsonResponse
+    public function delete(Company $company): JsonResponse
     {
+        $companyName = $company->getName();
         $this->em->remove($company);
         $this->em->flush();
 
-        return $this->json('Company successfully deleted!', 204);
+        return $this->json(sprintf('Company %s successfully deleted!', $companyName));
     }
 }

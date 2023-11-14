@@ -2,12 +2,13 @@
 
 namespace App\Controller\Project;
 
+use App\Entity\Employee;
 use App\Entity\Project;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 class EmployeeController extends AbstractController
@@ -17,8 +18,8 @@ class EmployeeController extends AbstractController
         $this->em = $em;
     }
 
-    #[Route('/projects/employees_show/{id}', name: 'project_employee_show', methods: ['GET'])]
-    public function showEmployeeAtProject(Project $project): JsonResponse
+    #[Route('/projects/{id}/employees', name: 'project_employee_index', methods: ['GET'])]
+    public function index(Project $project): JsonResponse
     {
         $employees = $project->getEmployees();
         $employeesArray = [];
@@ -36,28 +37,26 @@ class EmployeeController extends AbstractController
         return $this->json($employeesArray);
     }
 
-    #[Route('/projects/employees_add/{id}', name: 'project_employee_add', methods: ['PUT'])]
+    #[Route('/projects/{id}/employees/{employee_id}', name: 'project_employee_add', methods: ['PUT'])]
+    #[ParamConverter('employee', options: ['id' => 'employee_id'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function addEmployeeToProject(Request $request, Project $project): JsonResponse
+    public function add(Project $project, Employee $employee): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $employee = $data['employee'];
         $project->addEmployee($employee);
         $this->em->flush();
 
-        return $this->json('Employee successfully added to project' . $project->getName() . ' !');
+        return $this->json(sprintf('Employee %s successfully added to project %s!', $employee->getFullName(), $project->getName()));
     }
 
-    #[Route('/project/employees_delete/{id}', name: 'project_employee_delete', methods: ['DELETE'])]
+    #[Route('/projects/{id}/employees/{employee_id}', name: 'project_employee_remove', methods: ['DELETE'])]
+    #[ParamConverter('employee', options: ['id' => 'employee_id'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function deleteEmployeeInProject(Request $request, Project $project): JsonResponse
+    public function remove(Project $project, Employee $employee): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $employee = $data['employee'];
         $project->removeEmployee($employee);
         $this->em->flush();
 
-        return $this->json('Employee successfully deleted from project' . $project->getName() . ' !', 204);
+        return $this->json(sprintf('Employee %s successfully removed from project %s!', $employee->getFullName(), $project->getName()));
     }
 
 }

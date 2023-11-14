@@ -16,7 +16,6 @@ class Project
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'projects')]
-    #[ORM\JoinColumn(nullable: false)]
     private ?Company $company = null;
 
     #[ORM\OneToMany(mappedBy: 'project', targetEntity: Employee::class)]
@@ -43,7 +42,6 @@ class Project
     public function setCompany(?Company $company): static
     {
         $this->company = $company;
-        $company->addProject($this);
 
         return $this;
     }

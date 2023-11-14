@@ -3,11 +3,12 @@
 namespace App\Controller\Company;
 
 use App\Entity\Company;
+use App\Entity\Employee;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 class EmployeeController extends AbstractController
@@ -17,8 +18,8 @@ class EmployeeController extends AbstractController
         $this->em = $em;
     }
 
-    #[Route('/companies/employees_show/{id}', name: 'company_employee_show', methods: ['GET'])]
-    public function showEmployeeAtCompany(Company $company): JsonResponse
+    #[Route('/companies/{id}/employees', name: 'company_employee_index', methods: ['GET'])]
+    public function index(Company $company): JsonResponse
     {
         $employeesArray = [];
 
@@ -35,28 +36,26 @@ class EmployeeController extends AbstractController
         return $this->json($employeesArray);
     }
 
-    #[Route('/companies/employees_add/{id}', name: 'company_employee_add', methods: ['PUT'])]
+    #[Route('/companies/{id}/employees/{employee_id}', name: 'company_employee_add', methods: ['PUT'])]
+    #[ParamConverter('employee', options: ['id' => 'employee_id'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function addEmployeeToCompany(Request $request, Company $company): JsonResponse
+    public function add(Company $company, Employee $employee): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $employee = $data['employee'];
         $company->addEmployee($employee);
         $this->em->flush();
 
-        return $this->json('Employee successfully added to company' . $company->getName() . ' !');
+        return $this->json(sprintf('Employee %s successfully added to company %s!', $employee->getFullName(), $company->getName()));
     }
 
-    #[Route('/companies/employees_delete/{id}', name: 'company_employee_delete', methods: ['DELETE'])]
+    #[Route('/companies/{id}/employees/{employee_id}', name: 'company_employee_remove', methods: ['DELETE'])]
+    #[ParamConverter('employee', options: ['id' => 'employee_id'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function deleteEmployeeInCompany(Request $request, Company $company): JsonResponse
+    public function remove(Company $company, Employee $employee): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $employee = $data['employee'];
         $company->removeEmployee($employee);
         $this->em->flush();
 
-        return $this->json('Employee successfully deleted from company' . $company->getName() . ' !', 204);
+        return $this->json(sprintf('Employee %s successfully remove from company %s!',$employee->getFullName(), $company->getName()));
     }
 
 }

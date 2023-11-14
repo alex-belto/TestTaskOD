@@ -18,7 +18,7 @@ class Company
     #[ORM\OneToMany(mappedBy: 'company', targetEntity: Employee::class)]
     private Collection $employees;
 
-    #[ORM\OneToMany(mappedBy: 'company', targetEntity: Project::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'company', targetEntity: Project::class)]
     private Collection $projects;
 
     #[ORM\Column(length: 255)]
