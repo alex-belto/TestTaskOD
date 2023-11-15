@@ -14,13 +14,4 @@ class CompanyFactory
 
         return $company;
     }
-    public function createRandomCompany(): Company
-    {
-        $faker = Factory::create();
-
-        $company = new Company();
-        $company->setName($faker->company());
-
-        return $company;
-    }
 }
