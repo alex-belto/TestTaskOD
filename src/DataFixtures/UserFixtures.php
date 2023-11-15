@@ -19,7 +19,7 @@ class UserFixtures extends Fixture
         $admin = $this->userFactory->createAdmin();
         $manager->persist($admin);
 
-        for($i = 1; $i < 5; $i++) {
+        for($i = 0; $i < 4; $i++) {
             $user = $this->userFactory->createUser($faker->userName(), 'user');
             $manager->persist($user);
         }
