@@ -26,22 +26,22 @@ class UserController extends AbstractController
 
     #[Route('/users', name: 'user_create', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function createUser(Request $request): JsonResponse
+    public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         $user = $this->userFactory->createUser($data['username'], $data['password']);
         $this->em->persist($user);
         $this->em->flush();
-        return $this->json('User successfully created!', 201);
+        return $this->json(sprintf('User %s successfully created!', $user->getUsername()), 201);
     }
 
     #[Route('/users/{id}', name: 'user_delete', methods: ['DELETE'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function deleteUser(User $user): JsonResponse
+    public function delete(User $user): JsonResponse
     {
         $this->em->remove($user);
         $this->em->flush();
 
-        return $this->json('User successfully deleted!', 204);
+        return $this->json(sprintf('User %s successfully deleted!', $user->getUsername()));
     }
 }

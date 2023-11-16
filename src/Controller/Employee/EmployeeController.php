@@ -2,7 +2,10 @@
 
 namespace App\Controller\Employee;
 
+use App\Entity\Company;
 use App\Entity\Employee;
+use App\Entity\Project;
+use App\Entity\User;
 use App\Repository\EmployeeRepository;
 use App\Service\Factory\Employee\EmployeeFactory;
 use Doctrine\ORM\EntityManagerInterface;
@@ -26,14 +29,14 @@ class EmployeeController extends AbstractController
         $this->employeeFactory = $employeeFactory;
         $this->em = $em;
     }
-    #[Route('/employees', name: 'employee_show', methods: ['GET'])]
-    public function show(): JsonResponse
+    #[Route('/employees', name: 'employee_index', methods: ['GET'])]
+    public function index(): JsonResponse
     {
         $employees = $this->employeeRepository->findAll();
         $employeesArray = [];
 
         foreach ($employees as $employee) {
-            $employeesArray = [
+            $employeesArray[] = [
                 'firstName' => $employee->getFirstName(),
                 'lastName' => $employee->getLastName(),
                 'salary' => $employee->getSalary(),
@@ -45,8 +48,8 @@ class EmployeeController extends AbstractController
         return $this->json($employeesArray);
     }
 
-    #[Route('/employees/{id}', name: 'employee_get_one', methods: ['GET'])]
-    public function getEmployee(Employee $employee): JsonResponse
+    #[Route('/employees/{id}', name: 'employee_show', methods: ['GET'])]
+    public function show(Employee $employee): JsonResponse
     {
         $employee = [
             'firstName' => $employee->getFirstName(),
@@ -60,47 +63,53 @@ class EmployeeController extends AbstractController
 
     #[Route('/employees', name: 'employee_create', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function createEmployee(Request $request): JsonResponse
+    public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+        $company = $this->em->getRepository(Company::class)->find($data['company_id']);
+        $project = $this->em->getRepository(Project::class)->find($data['project_id']);
+        $user = $this->em->getRepository(User::class)->find($data['user_id']);
+
         $employee = $this->employeeFactory->createEmployee(
-            $data['company'],
-            $data['user'],
-            $data['project'],
+            $company,
+            $user,
+            $project,
             $data['firstName'],
             $data['lastName'],
             $data['salary']
         );
         $this->em->persist($employee);
         $this->em->flush();
-        return $this->json($employee, 201);
+        return $this->json(sprintf('Employee %s successfully created!', $employee->getFullName()), 201);
     }
 
     #[Route('/employees/{id}', name: 'employee_update', methods: ['PUT'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function updateEmployee(Request $request, Employee $employee): JsonResponse
+    public function update(Request $request, Employee $employee): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
-        $employee->setCompany($data['company']);
-        $employee->setProject($data['project']);
-        $employee->setConnectedUser($data['user']);
+        $company = $this->em->getRepository(Company::class)->find($data['company_id']);
+        $project = $this->em->getRepository(Project::class)->find($data['project_id']);
+        $user = $this->em->getRepository(User::class)->find($data['user_id']);
+        $employee->setCompany($company);
+        $employee->setProject($project);
+        $employee->setConnectedUser($user);
         $employee->setFirstName($data['firstName']);
         $employee->setLastName($data['lastName']);
         $employee->setSalary($data['salary']);
         $this->em->flush();
 
-        return $this->json($employee);
+        return $this->json(sprintf('Employee %s successfully updated!', $employee->getFullName()));
     }
-
 
     #[Route('/employees/{id}', name: 'employee_delete', methods: ['DELETE'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function deleteEmployee(Employee $employee): JsonResponse
+    public function delete(Employee $employee): JsonResponse
     {
         $this->em->remove($employee);
         $this->em->flush();
 
-        return $this->json('Employee successfully deleted!', 204);
+        return $this->json(sprintf('Employee %s successfully deleted!', $employee->getFullName()));
     }
 }

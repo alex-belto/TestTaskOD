@@ -2,6 +2,7 @@
 
 namespace App\Controller\Project;
 
+use App\Entity\Company;
 use App\Entity\Project;
 use App\Repository\ProjectRepository;
 use App\Service\Factory\Project\ProjectFactory;
@@ -26,8 +27,8 @@ class ProjectController extends AbstractController
         $this->projectFactory = $projectFactory;
         $this->em = $em;
     }
-    #[Route('/projects', name: 'project_show', methods: ['GET'])]
-    public function show(): JsonResponse
+    #[Route('/projects', name: 'project_index', methods: ['GET'])]
+    public function index(): JsonResponse
     {
         $projects = $this->projectRepository->findAll();
         $projectsArray = [];
@@ -41,8 +42,8 @@ class ProjectController extends AbstractController
         return $this->json($projectsArray);
     }
 
-    #[Route('/projects/{id}', name: 'project_get_one', methods: ['GET'])]
-    public function getProject(Project $project): JsonResponse
+    #[Route('/projects/{id}', name: 'project_show', methods: ['GET'])]
+    public function show(Project $project): JsonResponse
     {
         $projectsArray = [
             'project_name' => $project->getName(),
@@ -53,34 +54,38 @@ class ProjectController extends AbstractController
 
     #[Route('/projects', name: 'project_create', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function createProject(Request $request): JsonResponse
+    public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        $project = $this->projectFactory->createProject($data['company'], $data['name']);
+        $company = $this->em->getRepository(Company::class)->find($data['company_id']);
+
+        $project = $this->projectFactory->createProject($company, $data['name']);
         $this->em->persist($project);
         $this->em->flush();
-        return $this->json($project, 201);
+        return $this->json(sprintf('Project %s successfully created!', $project->getName()), 201);
     }
 
     #[Route('/projects/{id}', name: 'project_update', methods: ['PUT'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function updateProject(Request $request, Project $project): JsonResponse
+    public function update(Request $request, Project $project): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+        $company = $this->em->getRepository(Company::class)->find($data['company_id']);
 
         $project->setName($data['name']);
-        $project->setCompany($data['company']);
+        $project->setCompany($company);
         $this->em->flush();
 
-        return $this->json($project);
+        return $this->json(sprintf('Project %s successfully updated!', $project->getName()));
     }
 
     #[Route('/projects/{id}', name: 'project_delete', methods: ['DELETE'])]
-    public function deleteProject(Project $project): JsonResponse
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function delete(Project $project): JsonResponse
     {
         $this->em->remove($project);
         $this->em->flush();
 
-        return $this->json('Project successfully deleted!', 204);
+        return $this->json(sprintf('Project %s successfully deleted!', $project->getName()));
     }
 }
