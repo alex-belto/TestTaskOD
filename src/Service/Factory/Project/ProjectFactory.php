@@ -17,15 +17,4 @@ class ProjectFactory
 
         return $project;
     }
-
-    public function createRandomProject(Company $company): Project
-    {
-        $faker = Factory::create();
-
-        $project = new Project();
-        $project->setName($faker->domainName() . 'Project');
-        $project->setCompany($company);
-
-        return $project;
-    }
 }
