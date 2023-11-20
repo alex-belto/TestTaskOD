@@ -8,6 +8,7 @@ use App\Service\Factory\Company\CompanyFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -84,10 +85,20 @@ class CompanyController extends AbstractController
     }
 
     #[Route('/companies', name: 'company_create', methods: ['POST'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+//    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function create(Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
+        $form = $this->createFormBuilder()
+            ->add('name', TextType::class)
+            ->getForm();
+
+        $form->submit(json_decode($request->getContent(), true));
+
+        if(!$form->isSubmitted() || !$form->isValid()) {
+            return $this->json('Form data not valid!' , 400);
+        }
+
+        $data = $form->getData();
         $company = $this->companyFactory->createCompany($data['name']);
         $this->em->persist($company);
         $this->em->flush();
