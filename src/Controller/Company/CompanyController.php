@@ -88,18 +88,25 @@ class CompanyController extends AbstractController
 //    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function create(Request $request): JsonResponse
     {
-        $form = $this->createFormBuilder()
+        $data = json_decode($request->getContent(), true);
+        $company = new Company();
+        $form = $this->createFormBuilder($company)
             ->add('name', TextType::class)
             ->getForm();
 
-        $form->submit(json_decode($request->getContent(), true));
+        $form->submit(
+            ['form' => [
+                "name" => $data['name']
+                ]
+            ]
+        );
 
         if(!$form->isSubmitted() || !$form->isValid()) {
-            return $this->json('Form data not valid!' , 400);
+            $formName = $form->getName();
+            $errors = $form->getErrors();
+            return $this->json($form->getErrors() , 400);
         }
 
-        $data = $form->getData();
-        $company = $this->companyFactory->createCompany($data['name']);
         $this->em->persist($company);
         $this->em->flush();
         return $this->json(sprintf('Company %s successfully created!', $company->getName()), 201);
