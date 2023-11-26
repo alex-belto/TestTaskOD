@@ -5,6 +5,7 @@ namespace App\Controller\Company;
 use App\Entity\Company;
 use App\Repository\CompanyRepository;
 use App\Service\Factory\Company\CompanyFactory;
+use App\Service\Form\FormErrorHandler;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,14 +19,17 @@ class CompanyController extends AbstractController
     private CompanyRepository $companyRepository;
     private CompanyFactory $companyFactory;
     private EntityManagerInterface $em;
+    private FormErrorHandler $formErrorHandler;
     public function __construct(
         CompanyRepository $companyRepository,
         CompanyFactory $companyFactory,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        FormErrorHandler $formErrorHandler
     ) {
         $this->companyRepository = $companyRepository;
         $this->companyFactory = $companyFactory;
         $this->em = $em;
+        $this->formErrorHandler = $formErrorHandler;
     }
     #[Route('/companies', name: 'company_index', methods: ['GET'])]
     public function index(): JsonResponse
@@ -90,21 +94,15 @@ class CompanyController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         $company = new Company();
-        $form = $this->createFormBuilder($company)
+        $form = $this->createFormBuilder($company, ['csrf_protection' => false])
             ->add('name', TextType::class)
             ->getForm();
 
-        $form->submit(
-            ['form' => [
-                "name" => $data['name']
-                ]
-            ]
-        );
+        $form->submit($data);
 
         if(!$form->isSubmitted() || !$form->isValid()) {
-            $formName = $form->getName();
-            $errors = $form->getErrors();
-            return $this->json($form->getErrors() , 400);
+            $errors = $this->formErrorHandler->handleError($form);
+            return $this->json($errors , 400);
         }
 
         $this->em->persist($company);

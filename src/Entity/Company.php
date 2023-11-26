@@ -24,7 +24,8 @@ class Company
     private Collection $projects;
 
     #[ORM\Column(length: 255)]
-    #[Assert\Type(TextType::class)]
+    #[Assert\NotBlank]
+    #[Assert\Type('string')]
     private ?string $name = null;
 
     public function __construct()
