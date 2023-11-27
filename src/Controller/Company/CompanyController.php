@@ -111,12 +111,21 @@ class CompanyController extends AbstractController
     }
 
     #[Route('/companies/{id}', name: 'company_update', methods: ['PUT'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+//    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function update(Request $request, Company $company): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+        $form = $this->createFormBuilder($company, ['csrf_protection' => false])
+            ->add('name', TextType::class)
+            ->getForm();
 
-        $company->setName($data['name']);
+        $form->submit($data);
+
+        if(!$form->isSubmitted() || !$form->isValid()) {
+            $errors = $this->formErrorHandler->handleError($form);
+            return $this->json($errors , 400);
+        }
+
         $this->em->flush();
 
         return $this->json(sprintf('Company %s successfully updated!', $company->getName()));

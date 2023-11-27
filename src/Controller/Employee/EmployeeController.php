@@ -6,8 +6,10 @@ use App\Entity\Company;
 use App\Entity\Employee;
 use App\Entity\Project;
 use App\Entity\User;
+use App\Form\Type\EmployeeType;
 use App\Repository\EmployeeRepository;
 use App\Service\Factory\Employee\EmployeeFactory;
+use App\Service\Form\FormErrorHandler;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,14 +22,17 @@ class EmployeeController extends AbstractController
     private EmployeeRepository $employeeRepository;
     private EmployeeFactory $employeeFactory;
     private EntityManagerInterface $em;
+    private FormErrorHandler $formErrorHandler;
     public function __construct(
         EmployeeRepository $employeeRepository,
         EmployeeFactory $employeeFactory,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        FormErrorHandler $formErrorHandler
     ) {
         $this->employeeRepository = $employeeRepository;
         $this->employeeFactory = $employeeFactory;
         $this->em = $em;
+        $this->formErrorHandler = $formErrorHandler;
     }
     #[Route('/employees', name: 'employee_index', methods: ['GET'])]
     public function index(): JsonResponse
@@ -62,25 +67,36 @@ class EmployeeController extends AbstractController
     }
 
     #[Route('/employees', name: 'employee_create', methods: ['POST'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+//    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function create(Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $company = $this->em->getRepository(Company::class)->find($data['company_id']);
-        $project = $this->em->getRepository(Project::class)->find($data['project_id']);
-        $user = $this->em->getRepository(User::class)->find($data['user_id']);
+//        $data = json_decode($request->getContent(), true);
+//        $company = $this->em->getRepository(Company::class)->find($data['company_id']);
+//        $project = $this->em->getRepository(Project::class)->find($data['project_id']);
+//        $user = $this->em->getRepository(User::class)->find($data['user_id']);
+//
+//        $employee = $this->employeeFactory->createEmployee(
+//            $company,
+//            $user,
+//            $project,
+//            $data['firstName'],
+//            $data['lastName'],
+//            $data['salary']
+//        );
 
-        $employee = $this->employeeFactory->createEmployee(
-            $company,
-            $user,
-            $project,
-            $data['firstName'],
-            $data['lastName'],
-            $data['salary']
-        );
-        $this->em->persist($employee);
-        $this->em->flush();
-        return $this->json(sprintf('Employee %s successfully created!', $employee->getFullName()), 201);
+        $employee = new Employee();
+        $form = $this->createForm(EmployeeType::class, $employee, ['csrf_protection' => false]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $employee = $form->getData();
+            $this->em->persist($employee);
+            $this->em->flush();
+            return $this->json(sprintf('Employee %s successfully created!', $employee->getFullName()), 201);
+        }
+
+        $errors = $this->formErrorHandler->handleError($form);
+        return $this->json($errors , 400);
     }
 
     #[Route('/employees/{id}', name: 'employee_update', methods: ['PUT'])]
